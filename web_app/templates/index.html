@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Bankruptcy Risk Prediction</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="main-header">
+            <div class="header-badge-row">
+                <span class="system-badge">
+                    <span class="pulse-dot"></span> Neural Network Binary Classification Model
+                </span>
+                <span class="device-badge">Device: {{ device_name }}</span>
+            </div>
+            <h1 class="main-title">AI Bankruptcy Risk Prediction</h1>
+            <p class="main-subtitle">Financial data based bankruptcy risk prediction using a neural network.</p>
+            
+            <!-- Architecture Info Box -->
+            <div class="architecture-box">
+                <div class="arch-label">Model Architecture</div>
+                <div class="arch-flow">
+                    <span class="arch-step">95 Inputs</span>
+                    <span class="arch-arrow">→</span>
+                    <span class="arch-step">30 ReLU</span>
+                    <span class="arch-arrow">→</span>
+                    <span class="arch-step">20 ReLU</span>
+                    <span class="arch-arrow">→</span>
+                    <span class="arch-step arch-output">1 Output (Sigmoid)</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Prediction Result Container (Hidden until prediction) -->
+        <section id="resultSection" class="result-section" style="display: none;">
+            <div class="result-card" id="resultCard">
+                <div class="result-header">
+                    <div class="result-title-group">
+                        <span class="result-eyebrow">PREDICTION REPORT</span>
+                        <h2 class="result-decision" id="resultDecision">-</h2>
+                    </div>
+                    <div class="risk-badge" id="riskBadge">Pending</div>
+                </div>
+
+                <div class="result-body">
+                    <div class="risk-percentage-wrapper">
+                        <span class="risk-label">Bankruptcy Risk</span>
+                        <div class="risk-number-group">
+                            <span class="risk-value" id="riskPercentage">0.00</span>
+                            <span class="risk-percent-sign">%</span>
+                        </div>
+                    </div>
+
+                    <!-- Progress Gauge Bar -->
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-header">
+                            <span>0% Low Risk</span>
+                            <span class="threshold-marker">Threshold: 50%</span>
+                            <span>100% High Risk</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+                            <div class="progress-threshold-line"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-footer">
+                    <div class="result-meta-item">
+                        <span class="meta-title">Raw Probability</span>
+                        <span class="meta-val" id="rawProbability">-</span>
+                    </div>
+                    <div class="result-meta-item">
+                        <span class="meta-title">Classification Status</span>
+                        <span class="meta-val" id="classificationStatus">-</span>
+                    </div>
+                    <div class="result-meta-item">
+                        <span class="meta-title">Features Evaluated</span>
+                        <span class="meta-val">{{ num_features }} Financial Metrics</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Form Section -->
+        <main class="form-section">
+            <div class="section-top-bar">
+                <div>
+                    <h2 class="section-heading">Company Financial Data</h2>
+                    <p class="section-subheading">All {{ num_features }} standardized numerical indicators derived directly from financial statements.</p>
+                </div>
+                
+                <!-- Quick Fill Sample Actions -->
+                <div class="quick-actions">
+                    <span class="quick-label">Quick Test Data:</span>
+                    <button type="button" class="btn-secondary" id="btnLoadHealthy">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        Load Healthy Sample
+                    </button>
+                    <button type="button" class="btn-secondary" id="btnLoadBankrupt">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        Load Bankrupt Sample
+                    </button>
+                    <button type="button" class="btn-outline" id="btnLoadMean">Fill Averages</button>
+                    <button type="button" class="btn-outline" id="btnClearForm">Clear All</button>
+                </div>
+            </div>
+
+            <!-- Search / Filter Helper for the 95 inputs -->
+            <div class="filter-bar">
+                <input type="text" id="featureSearch" class="feature-search-input" placeholder="Search across 95 features (e.g., ROA, Margin, Debt, Ratio)...">
+                <span class="feature-count-badge" id="featureCountDisplay">Showing {{ num_features }} of {{ num_features }}</span>
+            </div>
+
+            <!-- Form Error Notification -->
+            <div id="formErrorMessage" class="alert-box alert-error" style="display: none;"></div>
+
+            <!-- 95 Features Form -->
+            <form id="predictionForm" novalidate>
+                <div class="features-grid">
+                    {% for feat in features %}
+                    <div class="input-card" data-feature-name="{{ feat.display_name.lower() }}">
+                        <div class="input-card-header">
+                            <span class="feature-index">#{{ feat.index }}</span>
+                            <label for="{{ feat.id }}" class="feature-label" title="{{ feat.name }}">
+                                {{ feat.display_name }}
+                            </label>
+                        </div>
+                        <input 
+                            type="number" 
+                            step="any" 
+                            id="{{ feat.id }}" 
+                            name="{{ feat.name }}" 
+                            class="feature-input" 
+                            placeholder="0.00" 
+                            required
+                        >
+                        <span class="field-error">This field is required</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Submit Action Area -->
+                <div class="form-action-container">
+                    <button type="submit" id="submitBtn" class="btn-primary">
+                        <span class="btn-icon">⚡</span>
+                        <span class="btn-text">PREDICT BANKRUPTCY RISK</span>
+                        <span class="btn-spinner" style="display: none;"></span>
+                    </button>
+                </div>
+            </form>
+        </main>
+
+        <!-- Academic Prototype Disclaimer Footer -->
+        <footer class="main-footer">
+            <div class="disclaimer-card">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="disclaimer-icon">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <p class="disclaimer-text">
+                    This model is an experimental decision-support prototype and should not be considered financial advice.
+                </p>
+            </div>
+            <div class="copyright-note">
+                PyTorch Neural Network Inference • FastAPI Backend • Exact 95-Feature Sequential Pipeline
+            </div>
+        </footer>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
