@@ -243,4 +243,22 @@ document.addEventListener('DOMContentLoaded', () => {
     searchInput.addEventListener('input', (e) => {
         filterFeatures(e.target.value);
     });
+
+    // -------------------------------------------------------------------------
+    // Architecture Diagram Toggle
+    // -------------------------------------------------------------------------
+    const btnToggleDiagram = document.getElementById('btnToggleDiagram');
+    const archDiagramWrapper = document.getElementById('archDiagramWrapper');
+    const toggleArrow = document.getElementById('toggleArrow');
+
+    if (btnToggleDiagram && archDiagramWrapper) {
+        btnToggleDiagram.addEventListener('click', () => {
+            const isHidden = archDiagramWrapper.style.display === 'none';
+            archDiagramWrapper.style.display = isHidden ? 'block' : 'none';
+            toggleArrow.textContent = isHidden ? '▲' : '▼';
+            if (isHidden) {
+                archDiagramWrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        });
+    }
 });

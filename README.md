@@ -8,6 +8,10 @@ Bu proje, şirketlerin finansal verilerini kullanarak **"Bankrupt?" (İflas Risk
 
 ## 🏗️ Model Mimarisi
 
+<p align="center">
+  <img src="assets/model_architecture.jpg" alt="Neural Network Model Architecture & Training Overview" width="100%" style="border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);" />
+</p>
+
 Model mimarisi aşağıdaki katmanlardan oluşmaktadır:
 ```
 95 Giriş Özelliği → 30 Nöron (ReLU) → 20 Nöron (ReLU) → 1 Çıktı (Logit)
