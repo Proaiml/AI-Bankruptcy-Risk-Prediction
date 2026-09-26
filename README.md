@@ -134,3 +134,12 @@ Sayfada yer alan model mimarisi ve uyarı metinleri:
 - **Model Architecture:** `95 Inputs → 30 ReLU → 20 ReLU → 1 Output`
 - **Classification:** `Neural Network Binary Classification Model`
 - **Uyarı:** *"This model is an experimental decision-support prototype and should not be considered financial advice."*
+
+## Test
+
+```bash
+pip install pytest httpx
+python -m pytest tests -q
+```
+
+Duman testleri yalnızca CPU kullanır ve birkaç saniyede biter.
