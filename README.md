@@ -1,7 +1,8 @@
 # AI Bankruptcy Risk Prediction (Yapay Sinir Ağı ile İflas Riski Tahmini)
 
-Bu proje, şirketlerin finansal verilerini kullanarak **"Bankrupt?" (İflas Riski)** ikili sınıflandırması (binary classification) yapan, önceden eğitilmiş PyTorch yapay sinir ağı modelini (`model_weights.pth`) modern ve kurumsal bir web arayüzü ile sunar.
+Bu proje, şirketlerin finansal verilerini kullanarak **"Bankrupt?" (İflas Riski)** ikili sınıflandırması (binary classification) yapan, önceden eğitilmiş PyTorch yapay sinir ağı modelini (`model_weights.pth`) bir web arayüzü ile sunar.
 
+**Veri seti:** 6.819 şirket, 95 finansal oran, hedef sütun `Bankrupt?`. Şirketlerin %3,2'si iflas etmiştir; yani veri çok dengesizdir. (Bu yapı, Tayvan Ekonomi Dergisi'nin 1999–2009 verisine dayanan, Kaggle/UCI'de "Taiwanese Bankruptcy Prediction" adıyla bilinen setle aynıdır.)
 
 ---
 
@@ -28,13 +29,16 @@ Model mimarisi aşağıdaki katmanlardan oluşmaktadır:
 ## 📁 Proje Dosya Yapısı
 
 ```
-ödev1/
+AI-Bankruptcy-Risk-Prediction/
 │
-├── main.py                 # Model eğitimi ve görselleştirme
+├── main.py                 # Model eğitimi ve görselleştirme (NVIDIA GPU ister)
 ├── model_weights.pth       # Eğitilmiş PyTorch model ağırlıkları
 ├── data.csv                # Veri seti (95 özellik + 1 hedef sütun)
 ├── requirements.txt        # Gerekli kütüphaneler
 ├── README.md               # Kurulum ve çalıştırma kılavuzu
+├── baslat.bat / start.bat  # Web arayüzünü tek tıkla başlatır
+├── assets/                 # Model mimarisi görseli
+├── tests/                  # API duman testi
 │
 └── web_app/                # Web Arayüzü ve Servis Klasörü
     ├── main.py             # FastAPI backend servisi & PyTorch model inference
@@ -55,6 +59,8 @@ Terminal veya PowerShell üzerinden proje klasöründe şu komutu çalıştırı
 ```bash
 pip install -r requirements.txt
 ```
+
+Web arayüzü CPU'da çalışır. Modeli yeniden eğitmek için (`python main.py`) NVIDIA GPU gerekir, çünkü betik tüm tensörleri CUDA'ya taşır.
 
 ### 2. Web Arayüzünü Başlatma
 
@@ -95,7 +101,7 @@ Web tarayıcınızı açarak aşağıdaki adrese gidin:
    - **Fill Averages:** Veri setinin ortalama değerlerini doldurur.
    - **Clear All:** Tüm alanları temizler.
 4. **Canlı Özellik Arama:** 95 özellik arasında aradığınız metriği (örneğin *ROA*, *Margin*, *Debt*) anında filtrelemenizi sağlayan arama çubuğu.
-5. **Görsel Risk Raporu:** Tahmin sonucunda iflas durumu (**Bankrupt** veya **Non-Bankrupt**), risk yüzdesi (%87.34 gibi) ve renkli ilerleme çubuğu (progress gauge) anında gösterilir.
+5. **Görsel Risk Raporu:** Tahmin sonucunda iflas durumu (**Bankrupt** veya **Non-Bankrupt**), risk yüzdesi ve renkli ilerleme çubuğu (progress gauge) anında gösterilir.
 6. **Validasyon & Hata Kontrolü:** Boş bırakılan alanlar, sayısal olmayan veya NaN/sonsuz değerler hem frontend hem backend tarafında yakalanarak kullanıcı uyarılır.
 
 ---
@@ -115,17 +121,47 @@ Web tarayıcınızı açarak aşağıdaki adrese gidin:
 }
 ```
 
-**Örnek Yanıt (Response):**
+**Yanıt biçimi (Response):**
 ```json
 {
-  "prediction": 1,
-  "probability": 0.8734,
-  "percentage": 87.34
+  "prediction": 0,
+  "probability": 0.4103,
+  "percentage": 41.03
 }
 ```
 
+`prediction` 1 ise iflas riski, 0 ise sağlam; `probability` modelin iflas olasılığıdır.
+
 ### 2. `GET /api/sample?type={bankrupt|non_bankrupt|mean}`
 Arayüzden tek tıkla test yapılabilmesi için veri setinden örnek veri döner.
+
+---
+
+## 📉 Modelin mevcut başarımı (dürüst değerlendirme)
+
+Kayıtlı `model_weights.pth`, eğitimdeki ayrımla (`test_size=0.33`, `random_state=42`) aynı 2.251 şirketlik test kümesinde ölçüldü:
+
+| Ölçüt | Değer |
+|---|---:|
+| Doğruluk | %96,3 |
+| Her şirkete "sağlam" diyen modelin doğruluğu | %96,4 |
+| Yakalanan iflas (81 iflas vakası içinde) | **0** (duyarlılık %0) |
+| ROC AUC | 0,50 |
+| Çıktı olasılığı | Test kümesinin %99'undan fazlasında sabit 0,4103 |
+
+Yani model şu anda iflas eden ve etmeyen şirketi **ayırt edemiyor**. Yüksek doğruluk, verinin %96,8'inin zaten sağlam şirket olmasından geliyor. Arayüz ve API doğru çalışır, ancak verdikleri risk yüzdesi bu nedenle anlamlı değildir.
+
+**Olası nedenler:**
+- Özellikler ölçeklenmemiş: bazı sütunlar 0–1 aralığındayken bazıları 10¹⁰'a kadar çıkıyor. Bu, ReLU nöronlarını ya hep kapalı ya hep doygun bırakıyor.
+- Sınıf dengesizliği (%3,2): kayıp fonksiyonu azınlık sınıfını neredeyse görmüyor.
+- Eğitim yalnızca 39 tam-toplu adım sürüyor.
+
+**Düzeltme için öneriler** (eğitim betiğinde):
+- `StandardScaler` ya da log dönüşümü uygulayın; aynı dönüşümü web uygulamasında da kullanın.
+- `BCEWithLogitsLoss(pos_weight=...)` ile iflas sınıfına ağırlık verin.
+- Daha uzun eğitim ve doğrulama kümesine göre erken durma kullanın.
+- Karar eşiğini 0,5 yerine duyarlılık/kesinlik dengesine göre seçin.
+- Doğruluk yerine duyarlılık, kesinlik, F1 ve ROC AUC raporlayın.
 
 ---
 
@@ -135,11 +171,11 @@ Sayfada yer alan model mimarisi ve uyarı metinleri:
 - **Classification:** `Neural Network Binary Classification Model`
 - **Uyarı:** *"This model is an experimental decision-support prototype and should not be considered financial advice."*
 
-## Test
+## 🧪 Test
 
 ```bash
 pip install pytest httpx
 python -m pytest tests -q
 ```
 
-Duman testleri yalnızca CPU kullanır ve birkaç saniyede biter.
+Test, API'nin modeli yüklediğini, üç örnek şirket için geçerli bir olasılık döndürdüğünü ve boş isteği reddettiğini denetler. Yalnızca CPU kullanır, birkaç saniyede biter.
