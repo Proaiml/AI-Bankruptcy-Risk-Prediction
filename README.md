@@ -2,7 +2,6 @@
 
 Bu proje, şirketlerin finansal verilerini kullanarak **"Bankrupt?" (İflas Riski)** ikili sınıflandırması (binary classification) yapan, önceden eğitilmiş PyTorch yapay sinir ağı modelini (`model_weights.pth`) modern ve kurumsal bir web arayüzü ile sunar.
 
-> **Not:** Kendi yazdığınız eğitim scriptiniz olan kök dizindeki `main.py` dosyasına **dokunulmamış**, tüm web arayüzü ve backend servisi bağımsız olarak **`web_app/`** klasörü içerisine yerleştirilmiştir.
 
 ---
 
@@ -31,7 +30,7 @@ Model mimarisi aşağıdaki katmanlardan oluşmaktadır:
 ```
 ödev1/
 │
-├── main.py                 # Sizin orijinal eğitim ve görselleştirme kodunuz (dokunulmadı)
+├── main.py                 # Model eğitimi ve görselleştirme
 ├── model_weights.pth       # Eğitilmiş PyTorch model ağırlıkları
 ├── data.csv                # Veri seti (95 özellik + 1 hedef sütun)
 ├── requirements.txt        # Gerekli kütüphaneler
